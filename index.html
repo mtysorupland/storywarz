@@ -144,7 +144,7 @@
 
 <script>
 // ─── Config ────────────────────────────────────────────────────────────────
-const API_KEY = "$2a$10$rEhnHJ.Y3C/XMZ/OKU7ZrOoDQv3uqoXN8rgQ9woKHR7ZDWpML7reW";
+const API_KEY = "$2a$10$RL0XL82Y/XW0Jkxo9BdmaOorUQ6rt2n0N4Z.luV9jMCVtZtl4sEo6";
 const BASE    = "https://api.jsonbin.io/v3";
 
 // ─── JSONBin helpers ───────────────────────────────────────────────────────
@@ -734,7 +734,7 @@ function showPlayerGuess(binId, name, initialGame) {
     const myGuess = (game.guesses[story.id]||{})[name];
     const targets = game.players.filter(p => p !== name);
 
-    const statusBar = div('status-bar',{style:'justify-content:center'});
+    const statusBar = div('status-bar');
     statusBar.style.justifyContent = 'center';
     statusBar.append(
       span('pill pill-red',`Story ${game.currentStoryIndex+1} / ${game.stories.length}`),
@@ -748,16 +748,15 @@ function showPlayerGuess(binId, name, initialGame) {
     if (isRevealed) {
       const isMine = story.author === name;
       const cls = isMine ? 'guess-result guess-own' : (myGuess === story.author ? 'guess-result guess-correct' : 'guess-result guess-wrong');
-      const msg = ismine => ismine
-        ? '🎭 That was your story!'
-        : myGuess === story.author
-          ? `✅ Correct! +${guesserPts(game.players.length)} pt${guesserPts(game.players.length)!==1?'s':''}. Written by ${story.author}.`
-          : `❌ You guessed ${myGuess||'nothing'}. It was ${story.author}'s story.`;
-      actionArea = el('div',{className:cls}, msg(ismine));
-      // tiny closure fix
-      function ismine() { return story.author === name; }
-      actionArea.textContent = msg(story.author === name);
-      actionArea.className = cls;
+      let msg;
+      if (isMine) {
+        msg = '🎭 That was your story!';
+      } else if (myGuess === story.author) {
+        msg = `✅ Correct! +${guesserPts(game.players.length)} pt${guesserPts(game.players.length)!==1?'s':''}. Written by ${story.author}.`;
+      } else {
+        msg = `❌ You guessed ${myGuess||'nothing'}. It was ${story.author}'s story.`;
+      }
+      actionArea = el('div',{className:cls}, msg);
     } else if (myGuess || guessSubmitted) {
       const locked = div('guess-result guess-own');
       locked.append(el('span',{className:'pulse'}), el('span',{style:'margin-left:8px'}, 'Locked in: '), el('strong',{}, myGuess||selectedGuess||''), el('span',{},' — waiting for host to reveal…'));
