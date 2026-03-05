@@ -360,16 +360,19 @@ function showHostLobby(binId, initialGame) {
     const card = div('card');
     card.append(
       span('section-label','Share Game Code'),
-      div('code-box',
-        el('div',{},
-          el('div',{style:'font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:2px'},'Game Code'),
-          span('code-text', game.gameCode)
-        ),
-        el('div',{style:'margin-left:auto;text-align:right'},
-          el('div',{style:'font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:2px'},'Bin ID'),
-          el('div',{style:'font-family:monospace;font-size:15px;color:var(--text);letter-spacing:1px'}, binId)
-        )
-      ),
+      (() => {
+        const box = div('code-box');
+        box.innerHTML = `
+          <div>
+            <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:2px">Game Code</div>
+            <div class="code-text">${game.gameCode}</div>
+          </div>
+          <div style="margin-left:auto;text-align:right">
+            <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:2px">Bin ID</div>
+            <div style="font-family:monospace;font-size:15px;color:var(--text);letter-spacing:1px;word-break:break-all">${binId}</div>
+          </div>`;
+        return box;
+      })(),
       div('divider'),
       el('div',{style:'margin-bottom:8px'}, span('section-label',`Players (${players.length})`)),
       progBar,
