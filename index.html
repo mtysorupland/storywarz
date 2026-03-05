@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Story Warz</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --red: #dc5028;
+      --red-dim: rgba(220,80,40,0.15);
+      --red-border: rgba(220,80,40,0.3);
+      --bg: #0d0d0d;
+      --surface: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
+      --text: #f0ece4;
+      --muted: #888;
+      --green: #32b464;
+      --blue: #508cdc;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+    #app { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 24px 16px 60px;
+      background: radial-gradient(ellipse at 20% 0%, rgba(220,80,40,0.12) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 100%, rgba(220,80,40,0.08) 0%, transparent 60%), var(--bg); }
+
+    /* ── Typography ── */
+    .logo { font-family: 'Bebas Neue', sans-serif; font-size: clamp(52px,12vw,88px); letter-spacing: 5px; line-height: 1; text-align: center; }
+    .logo em { color: var(--red); font-style: normal; }
+    .tagline { font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--muted); margin-top: 6px; text-align: center; }
+    h2 { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 2px; }
+    .section-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--red); margin-bottom: 10px; font-weight: 600; }
+
+    /* ── Layout ── */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 100%; max-width: 520px; margin-top: 16px; }
+    .divider { height: 1px; background: var(--border); margin: 20px 0; }
+    .row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .row:last-child { border-bottom: none; }
+    .status-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+
+    /* ── Inputs ── */
+    input, textarea { width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px;
+      padding: 12px 14px; outline: none; transition: border-color 0.15s; }
+    input:focus, textarea:focus { border-color: var(--red); }
+    input::placeholder, textarea::placeholder { color: #444; }
+    textarea { resize: vertical; min-height: 110px; line-height: 1.6; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.5px; }
+    .code-input { font-family: 'Bebas Neue', sans-serif !important; font-size: 24px !important; letter-spacing: 6px !important; }
+
+    /* ── Buttons ── */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 24px;
+      border-radius: 8px; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 600; letter-spacing: 0.5px; transition: all 0.15s; width: 100%; }
+    .btn-primary { background: var(--red); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #e8623a; transform: translateY(-1px); }
+    .btn-primary:disabled { background: #3a3a3a; color: #666; cursor: not-allowed; }
+    .btn-ghost { background: transparent; color: var(--text); border: 1px solid rgba(255,255,255,0.15); }
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.35); }
+    .btn-danger { background: transparent; color: #e05050; border: 1px solid rgba(224,80,80,0.3); font-size: 12px; padding: 8px 20px; width: auto; }
+    .btn-danger:hover { background: rgba(224,80,80,0.1); }
+    .btn-sm { padding: 8px 16px; font-size: 12px; width: auto; }
+
+    /* ── Pills ── */
+    .pill { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+    .pill-red { background: rgba(220,80,40,0.2); color: var(--red); }
+    .pill-green { background: rgba(50,180,100,0.2); color: var(--green); }
+    .pill-blue { background: rgba(80,140,220,0.2); color: var(--blue); }
+    .pill-gray { background: rgba(255,255,255,0.07); color: var(--muted); }
+
+    /* ── Alerts ── */
+    .alert { padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; line-height: 1.6; }
+    .alert-info { background: rgba(80,140,220,0.1); border: 1px solid rgba(80,140,220,0.2); color: #90b8f0; }
+    .alert-warning { background: rgba(220,160,40,0.1); border: 1px solid rgba(220,160,40,0.25); color: #dca028; }
+    .alert-error { background: rgba(224,80,80,0.1); border: 1px solid rgba(224,80,80,0.25); color: #f08080; }
+    .alert-success { background: rgba(50,180,100,0.1); border: 1px solid rgba(50,180,100,0.25); color: #70d090; }
+
+    /* ── Game-specific ── */
+    .story-box { background: rgba(220,80,40,0.06); border: 1px solid var(--red-border); border-radius: 12px;
+      padding: 20px; font-size: 15px; line-height: 1.75; margin: 12px 0; }
+    .player-chip { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 8px;
+      background: var(--surface); border: 1px solid var(--border); cursor: pointer; transition: all 0.15s;
+      margin-bottom: 8px; font-size: 14px; user-select: none; }
+    .player-chip:hover { border-color: var(--red); background: var(--red-dim); }
+    .player-chip.selected { border-color: var(--red); background: var(--red-dim); }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--red); display: flex;
+      align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .score-num { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--red); min-width: 48px; text-align: right; }
+    .reveal-banner { background: linear-gradient(135deg, rgba(220,80,40,0.18), rgba(220,80,40,0.04));
+      border: 1px solid rgba(220,80,40,0.4); border-radius: 12px; padding: 22px; text-align: center; margin-top: 14px; }
+    .reveal-name { font-family: 'Bebas Neue', sans-serif; font-size: 40px; letter-spacing: 3px; color: var(--red); }
+    .reveal-sub { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
+    .guess-result { padding: 14px; border-radius: 10px; margin-top: 12px; font-size: 14px; line-height: 1.5; }
+    .guess-correct { background: rgba(50,180,100,0.12); border: 1px solid rgba(50,180,100,0.3); }
+    .guess-wrong { background: rgba(224,80,80,0.1); border: 1px solid rgba(224,80,80,0.25); }
+    .guess-own { background: rgba(80,140,220,0.1); border: 1px solid rgba(80,140,220,0.2); }
+    .progress-bar { background: rgba(255,255,255,0.06); border-radius: 99px; height: 6px; overflow: hidden; margin: 10px 0 16px; }
+    .progress-fill { height: 100%; background: var(--red); border-radius: 99px; transition: width 0.5s ease; }
+    .submitted-icon { width: 60px; height: 60px; border-radius: 50%; background: rgba(50,180,100,0.15);
+      border: 2px solid rgba(50,180,100,0.4); display: flex; align-items: center; justify-content: center;
+      font-size: 26px; margin: 0 auto 18px; }
+    .code-box { display: flex; align-items: center; gap: 16px; padding: 16px 20px;
+      background: var(--red-dim); border: 1px solid var(--red-border); border-radius: 12px; margin-bottom: 20px; }
+    .code-text { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 5px; color: var(--red); }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 4px; background: rgba(255,255,255,0.04); border-radius: 8px; padding: 4px; margin-bottom: 20px; }
+    .tab { flex: 1; padding: 9px; border-radius: 6px; border: none; background: transparent; color: var(--muted);
+      font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; text-transform: uppercase; transition: all 0.15s; }
+    .tab.active { background: rgba(220,80,40,0.2); color: var(--red); }
+
+    /* ── Winner ── */
+    .winner-wrap { text-align: center; padding: 28px 0; }
+    .winner-trophy { font-size: 60px; margin-bottom: 10px; }
+    .winner-name { font-family: 'Bebas Neue', sans-serif; font-size: 54px; color: var(--red); letter-spacing: 3px; }
+    .winner-pts { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Mode selector ── */
+    .mode-grid { display: flex; gap: 14px; margin: 28px 0; width: 100%; max-width: 520px; }
+    .mode-card { flex: 1; padding: 22px 16px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.03); cursor: pointer; text-align: center; transition: all 0.15s; }
+    .mode-card:hover { border-color: var(--red); background: var(--red-dim); }
+    .mode-icon { font-size: 30px; margin-bottom: 10px; }
+    .mode-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; }
+    .mode-desc { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+    /* ── Spinner / pulse ── */
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.15);
+      border-top-color: #fff; border-radius: 50%; animation: spin 0.65s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--red); animation: pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.65)} }
+
+    /* ── Utility ── */
+    .mt8 { margin-top: 8px; } .mt12 { margin-top: 12px; } .mt16 { margin-top: 16px; } .mt24 { margin-top: 24px; }
+    .center { text-align: center; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ─── Config ────────────────────────────────────────────────────────────────
+const API_KEY = "$2a$10$rEhnHJ.Y3C/XMZ/OKU7ZrOoDQv3uqoXN8rgQ9woKHR7ZDWpML7reW";
+const BASE    = "https://api.jsonbin.io/v3";
+
+// ─── JSONBin helpers ───────────────────────────────────────────────────────
+async function createBin(data) {
+  const r = await fetch(`${BASE}/b`, {
+    method: "POST",
+    headers: { "Content-Type":"application/json", "X-Master-Key": API_KEY,
+                "X-Bin-Private":"false", "X-Bin-Tags": data.gameCode },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+  return (await r.json()).metadata.id;
+}
+async function readBin(id) {
+  const r = await fetch(`${BASE}/b/${id}/latest`, { headers:{"X-Master-Key":API_KEY} });
+  if (!r.ok) throw new Error(`${r.status}`);
+  return (await r.json()).record;
+}
+async function writeBin(id, data) {
+  const r = await fetch(`${BASE}/b/${id}`, {
+    method:"PUT", headers:{"Content-Type":"application/json","X-Master-Key":API_KEY},
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+  return (await r.json()).record;
+}
+async function findByCode(code) {
+  const r = await fetch(`${BASE}/b/search?tag=${encodeURIComponent(code)}`, { headers:{"X-Master-Key":API_KEY} });
+  if (!r.ok) throw new Error(`Search ${r.status}`);
+  const j = await r.json();
+  if (!j.data || j.data.length === 0) return null;
+  // Pick most recently created
+  j.data.sort((a,b) => (b.record.createdAt||0) - (a.record.createdAt||0));
+  return { binId: j.data[0].metadata.id, game: j.data[0].record };
+}
+
+// ─── Utilities ─────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function guesserPts(n) { return Math.ceil(n/3); }
+function authorPts(wrong) { return wrong; }
+
+function el(tag, attrs={}, ...children) {
+  const e = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs)) {
+    if (k === 'className') e.className = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2).toLowerCase(), v);
+    else e.setAttribute(k, v);
+  }
+  for (const c of children) {
+    if (c == null) continue;
+    e.append(typeof c === 'string' ? document.createTextNode(c) : c);
+  }
+  return e;
+}
+function div(cls, ...children) { return el('div', {className:cls}, ...children); }
+function span(cls, text) { return el('span', {className:cls}, text); }
+function btn(cls, text, onClick, disabled=false) {
+  const b = el('button', {className:'btn '+cls, onClick}, text);
+  if (disabled) b.disabled = true;
+  return b;
+}
+
+let pollTimer = null;
+function stopPoll() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+function startPoll(fn, ms=3000) { stopPoll(); fn(); pollTimer = setInterval(fn, ms); }
+
+// ─── Render engine ─────────────────────────────────────────────────────────
+const app = document.getElementById('app');
+function render(node) { app.innerHTML = ''; app.append(node); }
+
+// ─── Logo ──────────────────────────────────────────────────────────────────
+function Logo(tagline='') {
+  return div('',
+    el('div', {className:'logo'}, 'STORY ', el('em',{},'WARZ')),
+    tagline ? el('div',{className:'tagline'},tagline) : null
+  );
+}
+
+// ─── Landing ───────────────────────────────────────────────────────────────
+function showLanding() {
+  stopPoll();
+  const wrap = div('');
+  const modeGrid = div('mode-grid');
+
+  const hostCard = div('mode-card');
+  hostCard.innerHTML = `<div class="mode-icon">🎙️</div><div class="mode-title">Host</div><div class="mode-desc">Set up & run the game</div>`;
+  hostCard.onclick = showHostSetup;
+
+  const playerCard = div('mode-card');
+  playerCard.innerHTML = `<div class="mode-icon">🎭</div><div class="mode-title">Player</div><div class="mode-desc">Submit your story & guess</div>`;
+  playerCard.onclick = showPlayerJoin;
+
+  modeGrid.append(hostCard, playerCard);
+  wrap.append(
+    div('', el('div',{style:'margin-bottom:32px;margin-top:28px'}, Logo('A Game of Deceptive Storytelling'))),
+    modeGrid,
+    el('p',{style:'font-size:12px;color:#555;max-width:300px;text-align:center;margin-top:20px;line-height:1.7'},
+      'Host creates a game code. Players join from any device — no account needed.')
+  );
+  render(wrap);
+}
+
+// ─── Host Setup ────────────────────────────────────────────────────────────
+function showHostSetup() {
+  stopPoll();
+  const themeInput = el('input', {type:'text', placeholder:'"Most embarrassing travel story"'});
+  const codeInput  = el('input', {type:'text', placeholder:'e.g. WARZ24', className:'code-input', maxlength:'12'});
+  codeInput.oninput = () => { codeInput.value = codeInput.value.toUpperCase(); updateBtn(); };
+  themeInput.oninput = updateBtn;
+
+  const errDiv = div('alert alert-error hidden');
+  const createBtn = btn('btn-primary', 'Create Game →', doCreate, true);
+
+  function updateBtn() {
+    createBtn.disabled = !themeInput.value.trim() || codeInput.value.trim().length < 3;
+  }
+
+  async function doCreate() {
+    createBtn.disabled = true;
+    createBtn.innerHTML = '<span class="spinner"></span> Creating…';
+    errDiv.classList.add('hidden');
+    try {
+      const gameState = {
+        phase: 'collecting', theme: themeInput.value.trim(),
+        gameCode: codeInput.value.trim().toUpperCase(),
+        players:[], scores:{}, submissions:{},
+        stories:[], currentStoryIndex:0, guesses:{}, revealed:[],
+        createdAt: Date.now()
+      };
+      const binId = await createBin(gameState);
+      showHostLobby(binId, gameState);
+    } catch(e) {
+      errDiv.textContent = 'Failed to create game: ' + e.message;
+      errDiv.classList.remove('hidden');
+      createBtn.disabled = false;
+      createBtn.textContent = 'Create Game →';
+    }
+  }
+
+  const card = div('card');
+  card.append(
+    span('section-label','Game Theme'),
+    el('div',{className:'field mt8'}, themeInput),
+    div('divider'),
+    span('section-label','Game Code'),
+    div('alert alert-info mt8', 'Players enter this code to join from any device. Share it verbally or in your group chat.'),
+    el('div',{className:'field'}, codeInput),
+    errDiv,
+    createBtn
+  );
+
+  render(div('',
+    el('div',{style:'margin:28px 0 24px;text-align:center'}, Logo('Host Setup')),
+    card
+  ));
+}
+
+// ─── Host Lobby ────────────────────────────────────────────────────────────
+function showHostLobby(binId, initialGame) {
+  let game = initialGame;
+
+  function buildUI() {
+    const subs = game.submissions || {};
+    const players = game.players || [];
+    const subCount = Object.keys(subs).length;
+    const canStart = subCount >= 2 && subCount === players.length;
+
+    const playerList = div('');
+    if (players.length === 0) {
+      playerList.append(el('p',{className:'muted',style:'margin-bottom:12px'},'No players yet…'));
+    } else {
+      players.forEach(p => {
+        const row = div('row');
+        row.append(
+          el('span',{style:'font-size:14px'},p),
+          span('pill '+(subs[p]?'pill-green':'pill-gray'), subs[p]?'✓ Submitted':'Joined…')
+        );
+        playerList.append(row);
+      });
+    }
+
+    const pct = players.length > 0 ? (subCount/players.length)*100 : 0;
+    const progBar = div('progress-bar', el('div',{className:'progress-fill',style:`width:${pct}%`}));
+
+    const errDiv = div('alert alert-error hidden');
+    const startBtn = btn('btn-primary',
+      canStart ? `Start Game with ${subCount} Players →`
+        : subCount < 2 ? 'Need at least 2 players to start'
+        : `Waiting for ${players.length - subCount} more to submit…`,
+      doStart, !canStart
+    );
+
+    async function doStart() {
+      startBtn.disabled = true;
+      startBtn.innerHTML = '<span class="spinner"></span> Starting…';
+      try {
+        const fresh = await readBin(binId);
+        const stories = shuffle(Object.entries(fresh.submissions).map(([author,text],i)=>({id:i,author,text})));
+        const updated = {...fresh, phase:'playing', stories};
+        await writeBin(binId, updated);
+        showHostGame(binId, updated);
+      } catch(e) {
+        errDiv.textContent = 'Failed to start: '+e.message;
+        errDiv.classList.remove('hidden');
+        startBtn.disabled = false;
+        startBtn.textContent = `Start Game →`;
+      }
+    }
+
+    const card = div('card');
+    card.append(
+      span('section-label','Share Game Code'),
+      div('code-box',
+        span('code-text', game.gameCode),
+        el('span',{style:'font-size:13px;color:var(--muted);line-height:1.5'},
+          'Open this app on any device → select Player → enter this code.')
+      ),
+      div('divider'),
+      el('div',{style:'margin-bottom:8px'}, span('section-label',`Players (${players.length})`)),
+      progBar,
+      playerList,
+      el('div',{className:'mt16'}, errDiv, startBtn),
+      div('alert alert-warning mt16',
+        '🔒 You can see who joined, but not their stories — hidden until each reveal.')
+    );
+
+    return div('',
+      el('div',{style:'margin:28px 0 24px;text-align:center'}, Logo('Waiting for Players')),
+      card,
+      el('div',{style:'margin-top:16px;text-align:center'},
+        btn('btn-danger','Reset Game', resetGame))
+    );
+  }
+
+  async function resetGame() {
+    stopPoll();
+    try { await writeBin(binId,{phase:'dead'}); } catch {}
+    showLanding();
+  }
+
+  async function poll() {
+    try {
+      const g = await readBin(binId);
+      game = g;
+      if (g.phase === 'playing') { stopPoll(); showHostGame(binId, g); return; }
+      render(buildUI());
+    } catch {}
+  }
+
+  render(buildUI());
+  startPoll(poll);
+}
+
+// ─── Host Game ─────────────────────────────────────────────────────────────
+function showHostGame(binId, initialGame) {
+  let game = initialGame;
+  let activeTab = 'game';
+
+  function buildUI() {
+    const story = game.stories[game.currentStoryIndex];
+    const revealed = game.revealed.includes(story.id);
+    const guesses = game.guesses[story.id] || {};
+    const eligible = game.players.filter(p => p !== story.author);
+    const correctGuessers = Object.entries(guesses).filter(([p,g])=> p !== story.author && g === story.author);
+    const guessCount = Object.keys(guesses).filter(p => p !== story.author).length;
+
+    // Tabs
+    const tabs = div('tabs');
+    ['game','scores','guesses'].forEach(t => {
+      const tb = el('button',{className:'tab'+(activeTab===t?' active':'')}, t.charAt(0).toUpperCase()+t.slice(1));
+      tb.onclick = () => { activeTab = t; render(buildUI()); };
+      tabs.append(tb);
+    });
+
+    let content;
+
+    if (activeTab === 'game') {
+      const statusBar = div('status-bar');
+      statusBar.append(
+        span('pill pill-red',`Story ${game.currentStoryIndex+1} of ${game.stories.length}`),
+        span('pill pill-gray', game.theme)
+      );
+      if (!revealed) {
+        const p = el('span',{style:'font-size:12px;color:var(--muted)'}, ` ${guessCount} / ${eligible.length} guessed`);
+        statusBar.append(el('span',{className:'pulse'}), p);
+      }
+
+      const storyBox = div('story-box', story.text);
+      let actionArea;
+
+      if (!revealed) {
+        const revBtn = btn('btn-primary','Reveal Author →', async () => {
+          revBtn.disabled = true;
+          revBtn.innerHTML = '<span class="spinner"></span>';
+          try {
+            const fresh = await readBin(binId);
+            const updated = {...fresh, revealed:[...fresh.revealed, story.id]};
+            const freshGuesses = fresh.guesses[story.id] || {};
+            const elig = Object.entries(freshGuesses).filter(([p])=> p !== story.author);
+            const correct = elig.filter(([,g])=> g === story.author).map(([p])=>p);
+            const wrong = elig.length - correct.length;
+            correct.forEach(p => { updated.scores[p] = (updated.scores[p]||0) + guesserPts(fresh.players.length); });
+            updated.scores[story.author] = (updated.scores[story.author]||0) + authorPts(wrong);
+            await writeBin(binId, updated);
+            game = updated;
+            render(buildUI());
+          } catch(e) { alert('Error: '+e.message); revBtn.disabled=false; revBtn.textContent='Reveal Author →'; }
+        });
+        actionArea = el('div',{className:'mt16'}, revBtn);
+      } else {
+        const wrongCount = eligible.length - correctGuessers.length;
+        const revBanner = div('reveal-banner');
+        revBanner.innerHTML = `
+          <div style="font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Written by</div>
+          <div class="reveal-name">${story.author}</div>
+          <div class="reveal-sub">
+            ${correctGuessers.length} of ${eligible.length} guessed correctly
+            · Author earns ${authorPts(wrongCount)} pts
+            · Correct guessers earn ${guesserPts(game.players.length)} pts
+          </div>`;
+        const isLast = game.currentStoryIndex >= game.stories.length - 1;
+        const nextBtn = btn('btn-primary', isLast ? 'View Final Scores 🏆' : 'Next Story →', async () => {
+          nextBtn.disabled = true;
+          nextBtn.innerHTML = '<span class="spinner"></span>';
+          try {
+            const fresh = await readBin(binId);
+            const nextIdx = fresh.currentStoryIndex + 1;
+            const updated = {...fresh, currentStoryIndex: nextIdx, phase: nextIdx >= fresh.stories.length ? 'finished' : 'playing'};
+            await writeBin(binId, updated);
+            game = updated;
+            if (updated.phase === 'finished') { stopPoll(); showFinished(binId, game, null); }
+            else render(buildUI());
+          } catch(e) { alert('Error: '+e.message); nextBtn.disabled=false; }
+        });
+        actionArea = div('', revBanner, el('div',{className:'mt16'}, nextBtn));
+      }
+
+      content = div('card', statusBar, span('section-label','Current Story'), storyBox, actionArea);
+    }
+
+    else if (activeTab === 'scores') {
+      const sorted = [...game.players].sort((a,b)=>(game.scores[b]||0)-(game.scores[a]||0));
+      const rows = sorted.map((p,i) => {
+        const row = div('row');
+        row.append(
+          el('div',{style:'display:flex;align-items:center;gap:10px'},
+            el('span',{style:'font-size:16px;width:22px;text-align:center'}, i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}.`),
+            el('span',{style:'font-size:15px'},p)
+          ),
+          el('div',{className:'score-num'}, String(game.scores[p]||0))
+        );
+        return row;
+      });
+      content = div('card', span('section-label','Live Scoreboard'), ...rows);
+    }
+
+    else {
+      const guessRows = eligible.map(p => {
+        const row = div('row');
+        const g = guesses[p];
+        row.append(
+          el('span',{style:'font-size:14px'},p),
+          span('pill '+(g?'pill-red':'pill-gray'), g||'Waiting…')
+        );
+        return row;
+      });
+      content = div('card', span('section-label',`Guesses — Story ${game.currentStoryIndex+1}`), ...guessRows);
+    }
+
+    return div('',
+      el('div',{style:'margin:28px 0 24px;text-align:center'}, Logo('Host View')),
+      el('div',{style:'width:100%;max-width:520px'},
+        tabs, content,
+        el('div',{style:'margin-top:16px;text-align:center'},
+          btn('btn-danger','Reset Game', async()=>{ stopPoll(); try{await writeBin(binId,{phase:'dead'})}catch{}showLanding(); }))
+      )
+    );
+  }
+
+  async function poll() {
+    try {
+      const g = await readBin(binId);
+      game = g;
+      if (g.phase === 'finished') { stopPoll(); showFinished(binId, g, null); return; }
+      render(buildUI());
+    } catch {}
+  }
+
+  render(buildUI());
+  startPoll(poll);
+}
+
+// ─── Finished ──────────────────────────────────────────────────────────────
+function showFinished(binId, game, playerName) {
+  stopPoll();
+  const sorted = [...game.players].sort((a,b)=>(game.scores[b]||0)-(game.scores[a]||0));
+  const winner = sorted[0];
+  const myRank = playerName ? sorted.indexOf(playerName)+1 : null;
+
+  const rows = sorted.map((p,i) => {
+    const row = div('row');
+    const isMe = p === playerName;
+    row.style.opacity = (!playerName || isMe) ? '1' : '0.65';
+    row.append(
+      el('span',{style:`font-size:14px;font-weight:${isMe?600:400}`},
+        `${i+1}. ${p}${isMe?' (you)':''}`),
+      el('div',{className:'score-num'}, String(game.scores[p]||0))
+    );
+    return row;
+  });
+
+  const emojiRank = myRank===1?'🏆':myRank===2?'🥈':myRank===3?'🥉':'🎭';
+
+  const card = div('card center');
+  card.append(
+    div('winner-wrap',
+      el('div',{className:'winner-trophy'}, myRank ? emojiRank : '🏆'),
+      el('div',{style:'font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted)'},
+        myRank ? `You finished #${myRank}` : 'Winner'),
+      el('div',{className:'winner-name'}, myRank ? playerName : winner),
+      el('div',{className:'winner-pts'}, `${game.scores[myRank?playerName:winner]||0} points`)
+    ),
+    div('divider'),
+    span('section-label','Final Scores'),
+    ...rows,
+    div('divider'),
+    btn('btn-primary','Play Again', showLanding)
+  );
+
+  render(div('',
+    el('div',{style:'margin:28px 0 24px;text-align:center'}, Logo()),
+    card
+  ));
+}
+
+// ─── Player Join ───────────────────────────────────────────────────────────
+function showPlayerJoin() {
+  stopPoll();
+  const nameInput = el('input',{type:'text',placeholder:'Enter your name'});
+  const codeInput = el('input',{type:'text',placeholder:'Ask your host for the code',className:'code-input',maxlength:'12'});
+  codeInput.oninput = () => { codeInput.value = codeInput.value.toUpperCase(); updateBtn(); };
+  nameInput.oninput = updateBtn;
+
+  const errDiv = div('alert alert-error hidden');
+  const joinBtn = btn('btn-primary','Join Game →', doJoin, true);
+
+  function updateBtn() {
+    joinBtn.disabled = !nameInput.value.trim() || codeInput.value.trim().length < 3;
+  }
+
+  async function doJoin() {
+    joinBtn.disabled = true;
+    joinBtn.innerHTML = '<span class="spinner"></span> Finding game…';
+    errDiv.classList.add('hidden');
+    try {
+      const code = codeInput.value.trim().toUpperCase();
+      const result = await findByCode(code);
+      if (!result) {
+        throw new Error('No game found with that code. Check with your host.');
+      }
+      const {binId, game: g} = result;
+      if (g.gameCode !== code) throw new Error('Game code mismatch. Try again.');
+      if (g.phase !== 'collecting') throw new Error('This game has already started. Ask your host to start a new one.');
+
+      const name = nameInput.value.trim();
+      let updated = g;
+      if (!g.players.includes(name)) {
+        updated = {...g, players:[...g.players,name], scores:{...g.scores,[name]:0}};
+        await writeBin(binId, updated);
+      }
+      showPlayerStory(binId, name, updated);
+    } catch(e) {
+      errDiv.textContent = e.message;
+      errDiv.classList.remove('hidden');
+      joinBtn.disabled = false;
+      joinBtn.textContent = 'Join Game →';
+    }
+  }
+
+  const card = div('card');
+  card.append(
+    span('section-label','Your Name'),
+    el('div',{className:'field mt8'}, nameInput),
+    span('section-label','Game Code'),
+    el('div',{className:'field mt8'}, codeInput),
+    errDiv,
+    joinBtn
+  );
+
+  render(div('',
+    el('div',{style:'margin:28px 0 24px;text-align:center'}, Logo('Join the Game')),
+    card
+  ));
+}
+
+// ─── Player Story Submission ────────────────────────────────────────────────
+function showPlayerStory(binId, name, initialGame) {
+  let game = initialGame;
+  const alreadySubmitted = !!(game.submissions||{})[name];
+
+  if (alreadySubmitted) {
+    showWaitingForStart(binId, name);
+    return;
+  }
+
+  const textarea = el('textarea',{placeholder:'Write your true story here…'});
+  const errDiv = div('alert alert-error hidden');
+  const submitBtn = btn('btn-primary','Submit Story →', doSubmit, false);
+  submitBtn.disabled = true;
+  textarea.oninput = () => { submitBtn.disabled = !textarea.value.trim(); };
+
+  async function doSubmit() {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner"></span> Submitting…';
+    errDiv.classList.add('hidden');
+    try {
+      const fresh = await readBin(binId);
+      const updated = {...fresh, submissions:{...(fresh.submissions||{}), [name]: textarea.value.trim()}};
+      await writeBin(binId, updated);
+      showWaitingForStart(binId, name);
+    } catch(e) {
+      errDiv.textContent = 'Failed to submit: '+e.message;
+      errDiv.classList.remove('hidden');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Story →';
+    }
+  }
+
+  const card = div('card');
+  card.append(
+    span('section-label','Theme'),
+    el('p',{style:'font-size:15px;font-weight:600;margin-bottom:18px'}, game.theme),
+    div('alert alert-info','Write a true personal story. The host will not see your name — only revealed during the game.'),
+    el('div',{className:'field'}, textarea),
+    errDiv,
+    submitBtn
+  );
+
+  render(div('',
+    el('div',{style:'margin:28px 0 24px;text-align:center'}, Logo('Submit Your Story')),
+    card
+  ));
+}
+
+// ─── Player Waiting ─────────────────────────────────────────────────────────
+function showWaitingForStart(binId, name) {
+  async function poll() {
+    try {
+      const g = await readBin(binId);
+      if (g.phase === 'playing') { stopPoll(); showPlayerGuess(binId, name, g); }
+      else if (g.phase === 'finished') { stopPoll(); showFinished(binId, g, name); }
+    } catch {}
+  }
+
+  const card = div('card center');
+  card.append(
+    div('submitted-icon','✓'),
+    el('h2',{}, 'Story Submitted!'),
+    el('p',{style:'color:var(--muted);font-size:14px;margin-top:10px;line-height:1.7'},
+      'Waiting for everyone else and for the host to start the game…'),
+    el('div',{style:'margin-top:22px'}, el('span',{className:'pulse'}))
+  );
+
+  render(div('',
+    el('div',{style:'margin:28px 0 24px;text-align:center'}, Logo()),
+    card
+  ));
+  startPoll(poll);
+}
+
+// ─── Player Guess ───────────────────────────────────────────────────────────
+function showPlayerGuess(binId, name, initialGame) {
+  let game = initialGame;
+  let lastStoryId = null;
+  let guessSubmitted = false;
+  let selectedGuess = null;
+
+  function buildUI() {
+    const story = game.stories[game.currentStoryIndex];
+    const isRevealed = game.revealed.includes(story.id);
+    const myGuess = (game.guesses[story.id]||{})[name];
+    const targets = game.players.filter(p => p !== name);
+
+    const statusBar = div('status-bar',{style:'justify-content:center'});
+    statusBar.style.justifyContent = 'center';
+    statusBar.append(
+      span('pill pill-red',`Story ${game.currentStoryIndex+1} / ${game.stories.length}`),
+      span('pill pill-gray', game.theme),
+      span('pill pill-blue', name)
+    );
+
+    const storyBox = div('story-box', story.text);
+    let actionArea;
+
+    if (isRevealed) {
+      const isMine = story.author === name;
+      const cls = isMine ? 'guess-result guess-own' : (myGuess === story.author ? 'guess-result guess-correct' : 'guess-result guess-wrong');
+      const msg = ismine => ismine
+        ? '🎭 That was your story!'
+        : myGuess === story.author
+          ? `✅ Correct! +${guesserPts(game.players.length)} pt${guesserPts(game.players.length)!==1?'s':''}. Written by ${story.author}.`
+          : `❌ You guessed ${myGuess||'nothing'}. It was ${story.author}'s story.`;
+      actionArea = el('div',{className:cls}, msg(ismine));
+      // tiny closure fix
+      function ismine() { return story.author === name; }
+      actionArea.textContent = msg(story.author === name);
+      actionArea.className = cls;
+    } else if (myGuess || guessSubmitted) {
+      const locked = div('guess-result guess-own');
+      locked.append(el('span',{className:'pulse'}), el('span',{style:'margin-left:8px'}, 'Locked in: '), el('strong',{}, myGuess||selectedGuess||''), el('span',{},' — waiting for host to reveal…'));
+      actionArea = locked;
+    } else {
+      const chipWrap = div('mt12');
+      targets.forEach(p => {
+        const chip = div('player-chip'+(selectedGuess===p?' selected':''));
+        chip.append(el('div',{className:'avatar'},p[0].toUpperCase()), el('span',{},p));
+        if (selectedGuess === p) chip.append(el('span',{style:'margin-left:auto;color:var(--red)'},'✓'));
+        chip.onclick = () => { selectedGuess = p; render(buildUI()); };
+        chipWrap.append(chip);
+      });
+      const lockBtn = btn('btn-primary mt8','Lock In Guess →', async () => {
+        if (!selectedGuess) return;
+        lockBtn.disabled=true; lockBtn.innerHTML='<span class="spinner"></span>';
+        try {
+          const fresh = await readBin(binId);
+          const updated = {...fresh, guesses:{...fresh.guesses, [story.id]:{...(fresh.guesses[story.id]||{}),[name]:selectedGuess}}};
+          await writeBin(binId, updated);
+          guessSubmitted = true;
+          game = updated;
+          render(buildUI());
+        } catch(e){ alert('Error: '+e.message); lockBtn.disabled=false; lockBtn.textContent='Lock In Guess →'; }
+      }, !selectedGuess);
+      actionArea = div('', chipWrap, lockBtn);
+    }
+
+    // Scoreboard
+    const sorted = [...game.players].sort((a,b)=>(game.scores[b]||0)-(game.scores[a]||0));
+    const scoreRows = sorted.map((p,i) => {
+      const row = div('row');
+      row.style.opacity = p===name?'1':'0.6';
+      row.append(
+        el('span',{style:`font-size:13px;font-weight:${p===name?600:400}`},`${i+1}. ${p}${p===name?' (you)':''}`),
+        el('div',{className:'score-num',style:'font-size:22px'}, String(game.scores[p]||0))
+      );
+      return row;
+    });
+
+    const mainCard = div('card', span('section-label','The Story'), storyBox, actionArea);
+    const scoreCard = div('card mt12', span('section-label','Scoreboard'), ...scoreRows);
+
+    return div('',
+      el('div',{style:'margin:20px 0 16px;text-align:center'},
+        el('div',{className:'logo',style:'font-size:clamp(32px,8vw,52px)'}, 'STORY ', el('em',{},'WARZ'))),
+      el('div',{style:'width:100%;max-width:420px'}, statusBar, mainCard, scoreCard)
+    );
+  }
+
+  async function poll() {
+    try {
+      const g = await readBin(binId);
+      if (g.phase === 'finished') { stopPoll(); showFinished(binId, g, name); return; }
+      const story = g.stories[g.currentStoryIndex];
+      if (story && story.id !== lastStoryId) {
+        lastStoryId = story.id;
+        guessSubmitted = false;
+        selectedGuess = null;
+      }
+      game = g;
+      render(buildUI());
+    } catch {}
+  }
+
+  render(buildUI());
+  startPoll(poll);
+}
+
+// ─── Boot ───────────────────────────────────────────────────────────────────
+showLanding();
+</script>
+</body>
+</html>
