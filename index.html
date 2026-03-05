@@ -171,14 +171,11 @@ async function writeBin(id, data) {
   if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
   return (await r.json()).record;
 }
-async function findByCode(code) {
-  const r = await fetch(`${BASE}/b/search?tag=${encodeURIComponent(code)}`, { headers:{"X-Master-Key":API_KEY} });
-  if (!r.ok) throw new Error(`Search ${r.status}`);
-  const j = await r.json();
-  if (!j.data || j.data.length === 0) return null;
-  // Pick most recently created
-  j.data.sort((a,b) => (b.record.createdAt||0) - (a.record.createdAt||0));
-  return { binId: j.data[0].metadata.id, game: j.data[0].record };
+async function findByCode(binId, code) {
+  const g = await readBin(binId);
+  if (!g || !g.gameCode) throw new Error('No game found with that Bin ID. Check with your host.');
+  if (g.gameCode !== code) throw new Error(`Wrong game code for this game. You entered "${code}" — check with your host.`);
+  return { binId, game: g };
 }
 
 // ─── Utilities ─────────────────────────────────────────────────────────────
@@ -364,9 +361,14 @@ function showHostLobby(binId, initialGame) {
     card.append(
       span('section-label','Share Game Code'),
       div('code-box',
-        span('code-text', game.gameCode),
-        el('span',{style:'font-size:13px;color:var(--muted);line-height:1.5'},
-          'Open this app on any device → select Player → enter this code.')
+        el('div',{},
+          el('div',{style:'font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:2px'},'Game Code'),
+          span('code-text', game.gameCode)
+        ),
+        el('div',{style:'margin-left:auto;text-align:right'},
+          el('div',{style:'font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:2px'},'Bin ID'),
+          el('div',{style:'font-family:monospace;font-size:15px;color:var(--text);letter-spacing:1px'}, binId)
+        )
       ),
       div('divider'),
       el('div',{style:'margin-bottom:8px'}, span('section-label',`Players (${players.length})`)),
@@ -374,7 +376,7 @@ function showHostLobby(binId, initialGame) {
       playerList,
       el('div',{className:'mt16'}, errDiv, startBtn),
       div('alert alert-warning mt16',
-        '🔒 You can see who joined, but not their stories — hidden until each reveal.')
+        '🔒 Share both the Game Code and Bin ID with players. You can see who joined, but not their stories.')
     );
 
     return div('',
@@ -590,15 +592,17 @@ function showFinished(binId, game, playerName) {
 function showPlayerJoin() {
   stopPoll();
   const nameInput = el('input',{type:'text',placeholder:'Enter your name'});
-  const codeInput = el('input',{type:'text',placeholder:'Ask your host for the code',className:'code-input',maxlength:'12'});
+  const codeInput = el('input',{type:'text',placeholder:'e.g. WARZ24',className:'code-input',maxlength:'12'});
+  const binInput  = el('input',{type:'text',placeholder:'e.g. 6789abc123',style:'font-family:monospace;letter-spacing:1px'});
   codeInput.oninput = () => { codeInput.value = codeInput.value.toUpperCase(); updateBtn(); };
   nameInput.oninput = updateBtn;
+  binInput.oninput  = updateBtn;
 
   const errDiv = div('alert alert-error hidden');
   const joinBtn = btn('btn-primary','Join Game →', doJoin, true);
 
   function updateBtn() {
-    joinBtn.disabled = !nameInput.value.trim() || codeInput.value.trim().length < 3;
+    joinBtn.disabled = !nameInput.value.trim() || codeInput.value.trim().length < 3 || !binInput.value.trim();
   }
 
   async function doJoin() {
@@ -607,7 +611,7 @@ function showPlayerJoin() {
     errDiv.classList.add('hidden');
     try {
       const code = codeInput.value.trim().toUpperCase();
-      const result = await findByCode(code);
+      const result = await findByCode(binInput.value.trim(), code);
       if (!result) {
         throw new Error('No game found with that code. Check with your host.');
       }
@@ -636,6 +640,9 @@ function showPlayerJoin() {
     el('div',{className:'field mt8'}, nameInput),
     span('section-label','Game Code'),
     el('div',{className:'field mt8'}, codeInput),
+    span('section-label','Bin ID'),
+    div('alert alert-info','The host will share both of these with you.'),
+    el('div',{className:'field'}, binInput),
     errDiv,
     joinBtn
   );
