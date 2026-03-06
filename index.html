@@ -596,7 +596,7 @@ function showFinished(binId, game, playerName) {
     span('section-label','Final Scores'),
     ...rows,
     div('divider'),
-    btn('btn-primary','Play Again', showLanding)
+    btn('btn-primary','Play Again', () => { localStorage.removeItem('sw_session'); showLanding(); })
   );
 
   render(div('',
@@ -606,6 +606,19 @@ function showFinished(binId, game, playerName) {
 }
 
 // ─── Player Join ───────────────────────────────────────────────────────────
+function routePlayer(binId, name, game) {
+  localStorage.setItem('sw_session', JSON.stringify({binId, name}));
+  if (game.phase === 'collecting') {
+    showPlayerStory(binId, name, game);
+  } else if (game.phase === 'playing') {
+    showPlayerGuess(binId, name, game);
+  } else if (game.phase === 'finished') {
+    showFinished(binId, game, name);
+  } else {
+    showPlayerStory(binId, name, game);
+  }
+}
+
 function showPlayerJoin() {
   stopPoll();
   const nameInput = el('input',{type:'text',placeholder:'Enter your name'});
@@ -634,15 +647,16 @@ function showPlayerJoin() {
       }
       const {binId, game: g} = result;
       if (g.gameCode !== code) throw new Error('Game code mismatch. Try again.');
-      if (g.phase !== 'collecting') throw new Error('This game has already started. Ask your host to start a new one.');
+      // Allow rejoin at any phase - just route to the right screen
 
       const name = nameInput.value.trim();
       let updated = g;
-      if (!g.players.includes(name)) {
+      if (!g.players.includes(name) && g.phase === 'collecting') {
         updated = {...g, players:[...g.players,name], scores:{...g.scores,[name]:0}};
         await writeBin(binId, updated);
       }
-      showPlayerStory(binId, name, updated);
+      localStorage.setItem('sw_session', JSON.stringify({binId, name}));
+      routePlayer(binId, name, updated);
     } catch(e) {
       errDiv.textContent = e.message;
       errDiv.classList.remove('hidden');
@@ -851,7 +865,24 @@ function showPlayerGuess(binId, name, initialGame) {
 }
 
 // ─── Boot ───────────────────────────────────────────────────────────────────
-showLanding();
+async function boot() {
+  const saved = localStorage.getItem('sw_session');
+  if (saved) {
+    try {
+      const {binId, name} = JSON.parse(saved);
+      if (binId && name) {
+        const g = await readBin(binId);
+        if (g && g.phase !== 'dead' && g.players.includes(name)) {
+          routePlayer(binId, name, g);
+          return;
+        }
+      }
+    } catch {}
+    localStorage.removeItem('sw_session');
+  }
+  showLanding();
+}
+boot();
 </script>
 </body>
 </html>
