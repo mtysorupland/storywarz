@@ -439,7 +439,7 @@ function showHostGame(binId, initialGame) {
         span('pill pill-gray', game.theme)
       );
       if (!revealed) {
-        const p = el('span',{style:'font-size:12px;color:var(--muted)'}, ` ${guessCount} / ${eligible.length} guessed`);
+        const p = el('span',{style:'font-size:12px;color:var(--muted)'}, ` ${guessCount} / ${game.players.length} guessed`);
         statusBar.append(el('span',{className:'pulse'}), p);
       }
 
@@ -464,7 +464,21 @@ function showHostGame(binId, initialGame) {
             render(buildUI());
           } catch(e) { alert('Error: '+e.message); revBtn.disabled=false; revBtn.textContent='Reveal Author →'; }
         });
-        actionArea = el('div',{className:'mt16'}, revBtn);
+        const allIn = guessCount >= game.players.length;
+        revBtn.disabled = !allIn;
+        if (!allIn) revBtn.title = 'Waiting for all players to guess';
+
+        const skipBtn = el('button', {className:'btn btn-ghost'}, 'Skip & Reveal →');
+        skipBtn.style.cssText = 'font-size:12px;padding:9px 16px;opacity:0.55;margin-top:8px;width:100%';
+        skipBtn.title = 'Reveal now without waiting for remaining guesses';
+        skipBtn.onclick = async () => {
+          revBtn.disabled = false;
+          revBtn.click();
+        };
+
+        actionArea = el('div',{className:'mt16'}, revBtn,
+          allIn ? null : skipBtn
+        );
       } else {
         const wrongCount = eligible.length - correctGuessers.length;
         const revBanner = div('reveal-banner');
